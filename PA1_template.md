@@ -14,11 +14,11 @@
     noNasMean   <- round(mean(stepsNoNas$total_steps),2)
     noNasMedian <- round(median(stepsNoNas$total_steps),2)
 
-![](figure/plot2-1.png)<!-- -->
+![](figure/plot1-1.png)<!-- -->
 
 ### 3. What is the average daily activity pattern?
 
-![](figure/dailyPattern-1.png)<!-- -->
+![](figure/plot2-1.png)<!-- -->
 
 ### 4. Inputing missing values
 
