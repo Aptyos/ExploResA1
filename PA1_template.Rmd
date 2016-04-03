@@ -14,8 +14,19 @@ library(markdown)
 library(knitr)
 ```
 
-### 1. Total number of steps taken each day 
-```{r plot1, echo=FALSE}
+### 1 Loading and preprocessing the data
+```{r loading, echo=TRUE}
+v_url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+temp <- tempfile()
+download.file(v_url,temp)
+oriData <- read.csv(unz(temp, "activity.csv"))
+unlink(temp)   
+oriData <- read.csv("activity.csv", stringsAsFactors =FALSE )
+```
+
+
+### 2. What is mean total number of steps taken per day? 
+```{r processing, echo=FALSE}
 oriData <- read.csv("activity.csv", stringsAsFactors =FALSE )
 oriData <- data.frame(curr_dt=as.Date(oriData$date,"%Y-%m-%d"), interval=str_pad(oriData$interval,4,"left","0"), steps= as.numeric(oriData$steps), stringsAsFactors =FALSE )
 
@@ -24,22 +35,25 @@ stepsNoNas <-
   stepsNoNas %>%
   group_by(curr_dt) %>%
   summarize(total_steps = sum(steps, na.rm =TRUE), v_mean = mean(steps, na.rm =TRUE), v_med=median(steps, na.rm =TRUE), na_steps=sum(is.na(steps)) )
-
+```
+  
+#### Mean and median calculated from dataset and reported in plot:
+```{r processing1, echo=TRUE}
 noNasMean   <- round(mean(stepsNoNas$total_steps),2)
 noNasMedian <- round(median(stepsNoNas$total_steps),2)
+```
 
-## Plotting
+```{r plot2, echo=FALSE}
 hist( stepsNoNas$total_steps, col="steelblue", breaks = 20,  xlab = "", main="",  ylim=c(0,20) )
 abline(v=noNasMean,  col="magenta",lwd=3)
 abline(v=noNasMedian, col="green", lwd=2)
 legend("topright", y.intersp=1.2, lty=1, col = c("green","magenta"), cex =0.8, legend = c(paste(" Median =", noNasMedian), paste("Average =", noNasMean) ) ) 
 title(main="Steps Distribution ( excluding missing values)", xlab = "Total Daily Steps")
 ```
-
-#### Mean and median number of steps taken each day shown in legend above.
-
-### 2. Time series plot of the average number of steps taken
-```{r plot2, echo=FALSE}
+  
+  
+### 3. What is the average daily activity pattern?  
+```{r dailyPattern, echo=FALSE}
 meltSteps <- melt(oriData, id=c("interval"), measure.vars=c("steps"))
 meltSteps <- meltSteps [ complete.cases(meltSteps),]
 castSteps <- dcast(data = meltSteps, interval ~variable, mean)
@@ -60,7 +74,7 @@ legend("topright", y.intersp=1.2, cex =0.8, legend = c(paste("Max Time Interval 
 ```
 
 
-
+### 4. Inputing missing values  
 ```{r replaceNA_code, echo=FALSE}
 newData <- subset(oriData, steps >= 0  )
 
@@ -70,13 +84,19 @@ stepsDaily <-
   summarize(total_steps = sum(steps, na.rm =TRUE), v_mean = mean(steps, na.rm =TRUE), v_med=median(steps, na.rm =TRUE), na_steps=sum(is.na(steps)) )
 
 missedDaily <- subset( stepsDaily, na_steps > 0)
+```
 
+#### Strategy:
+##### Uses a function which replaces NAs with previously calculated daily average
+```{r replaceNA_code_fn, echo=TRUE}
 getMissMean <- function ( vdate) {
   allMean <- summary( stepsDaily$v_mean)[4]
   getRow <- missedDaily [ missedDaily$curr_dt == vdate,]
   ifelse( getRow$na_steps == 288, allMean, getRow$v_mean )
 }
-
+``` 
+##### and allows to generate a dataset restricted to NAs values
+```{r replaceNA_code_next, echo=TRUE}
 for ( vCurrDt in missedDaily$curr_dt ) {
   missed_steps <- subset(oriData, is.na(steps) & curr_dt == vCurrDt )
   newSteps <-
@@ -84,19 +104,25 @@ for ( vCurrDt in missedDaily$curr_dt ) {
     mutate(steps = getMissMean(vCurrDt))
   newData <- rbind(newData, newSteps)
 }
+``` 
 
+```{r replaceNA_code_bef_merge, echo=FALSE}
 stepsNewDaily <-
   newData %>%
   group_by(curr_dt) %>%
   summarize(total_steps = sum(steps, na.rm =TRUE), v_mean = mean(steps, na.rm =TRUE), v_med=median(steps, na.rm =TRUE), na_steps=100*mean(is.na(steps)) )
-
+```
+##### Merge NAs restricetd dataset with no NAs Dataset
+```{r replaceNA_code_merge, echo=TRUE}
 oriData <- cbind(new_dt=strptime(paste(oriData$curr_dt, oriData$interval),format("%Y-%m-%d %H%M")), oriData)
 newData <- cbind(new_dt=strptime(paste(newData$curr_dt, newData$interval),format("%Y-%m-%d %H%M")), newData)
 mrg_data <- merge(oriData, newData, by.x = "new_dt", by.y = "new_dt")
 mrg_data <- select (mrg_data, -(curr_dt.y:interval.y)) 
 ```
-
-### 3. Histogram of the total number of steps taken each day after missing values are inputed
+  
+  
+  
+### 5. Histogram of the total number of steps taken each day after missing values are inputed
 ```{r plot3, echo=FALSE}
 newData <-                                                            
   mrg_data %>%                                                          
@@ -126,5 +152,7 @@ weekData <-
    summarize(average = mean(steps))
 ```
 
-### 4. Average number of steps taken per 5-minute interval across weekdays and weekends
+### 6. differences in activity patterns between weekdays and weekends?
+
+#### Plot of the Average number of steps taken per 5-minute interval across weekdays and weekends
 ![](figure/plot4-1.png)<!-- -->
