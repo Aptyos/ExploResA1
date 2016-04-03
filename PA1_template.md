@@ -14,11 +14,11 @@
     noNasMean   <- round(mean(stepsNoNas$total_steps),2)
     noNasMedian <- round(median(stepsNoNas$total_steps),2)
 
-![](PA1_template_files/figure-markdown_strict/plot2-1.png)<!-- -->
+![](figure/plot2-1.png)<!-- -->
 
 ### 3. What is the average daily activity pattern?
 
-![](PA1_template_files/figure-markdown_strict/dailyPattern-1.png)<!-- -->
+![](figure/dailyPattern-1.png)<!-- -->
 
 ### 4. Inputing missing values
 
@@ -51,7 +51,7 @@
 
 ### 5. Histogram of the total number of steps taken each day after missing values are inputed
 
-![](PA1_template_files/figure-markdown_strict/plot3-1.png)<!-- -->
+![](figure/plot3-1.png)<!-- -->
 
 ### 6. differences in activity patterns between weekdays and weekends?
 
